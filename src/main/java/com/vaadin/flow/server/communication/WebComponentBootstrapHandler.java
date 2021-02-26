@@ -90,10 +90,6 @@ public class WebComponentBootstrapHandler extends BootstrapHandler {
     }
 
     private static class WebComponentBootstrapPageBuilder extends BootstrapPageBuilder {
-        @Override
-        protected List<String> getChunkKeys(JsonObject chunks) {
-            return Collections.singletonList(EXPORT_CHUNK);
-        }
     }
 
     /**
@@ -247,12 +243,25 @@ public class WebComponentBootstrapHandler extends BootstrapHandler {
          */
         ArrayList<com.vaadin.flow.dom.Element> elementsForShadows = new ArrayList<>();
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(response.getOutputStream(), UTF_8))) {
+            writer.write(
+                    "var hasScript = function(src) {return !!Array.from(document.head.querySelectorAll('script')).find(script => script.src.endsWith(src))};\n");
             String varName = "headElem"; // generated head element
             writer.append("var ").append(varName).append("=null;");
             for (Element element : head.children()) {
                 if (elementShouldNotBeTransferred(element)) {
                     getElementForShadowDom(element).ifPresent(elementsForShadows::add);
                     continue;
+                }
+                String conditionalFilename = null;
+                if ("script".equals(element.tagName())) {
+                    String src = element.attr("src");
+                    if (src.contains("/VAADIN/build/")) {
+                        conditionalFilename = src.substring(src.indexOf("/VAADIN/build/"));
+                    }
+                }
+
+                if (conditionalFilename != null) {
+                    writer.append("if (!hasScript('" + conditionalFilename + "')) {\n");
                 }
                 writer.append(varName).append("=");
                 writer.append("document.createElement('").append(element.tagName()).append("');");
@@ -263,6 +272,9 @@ public class WebComponentBootstrapHandler extends BootstrapHandler {
                     writer.append(varName).append(".innerHTML=\"").append(inlineHTML(elementHtml)).append("\";");
                 }
                 writer.append("document.head.appendChild(").append(varName).append(");");
+                if (conditionalFilename != null) {
+                    writer.append("}\n");
+                }
             }
         }
 

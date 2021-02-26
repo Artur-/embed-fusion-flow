@@ -12,6 +12,10 @@ const flowDefaults = require('./webpack.generated.js');
  * To change the webpack config, add a new configuration object in
  * the merge arguments below:
  */
+if (flowDefaults.entry.export) {
+  flowDefaults.entry.bundle = [flowDefaults.entry.bundle, flowDefaults.entry.export];
+  delete flowDefaults.entry.export;
+}
 module.exports = merge(flowDefaults,
   // Override default configuration
   // {
