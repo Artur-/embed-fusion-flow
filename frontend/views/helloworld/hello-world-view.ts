@@ -13,6 +13,8 @@ export class HelloWorldView extends View {
     return html`
       <vaadin-text-field label="Your name" @value-changed="${this.nameChanged}"></vaadin-text-field>
       <vaadin-button @click="${this.sayHello}">Say hello</vaadin-button>
+
+      <server-info></server-info>
     `;
   }
   nameChanged(e: CustomEvent) {
@@ -20,6 +22,6 @@ export class HelloWorldView extends View {
   }
 
   sayHello() {
-    showNotification(`Hello ${this.name}`);
+    showNotification(`Hello ${this.name}, I am TypeScript`);
   }
 }
